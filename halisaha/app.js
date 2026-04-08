@@ -100,9 +100,9 @@ function render() {
 // --- NAV ---
 function renderNav(session) {
   return `
-    <nav style="overflow:visible">
-      <div style="cursor:pointer;position:relative;height:36px" id="navLogo">
-        <img src="logo.png" alt="KADROM" style="height:80px;position:absolute;top:-22px;left:0;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.5))">
+    <nav style="overflow:visible;min-height:60px">
+      <div style="cursor:pointer;position:relative;width:120px;height:40px" id="navLogo">
+        <img src="logo.png" alt="KADROM" style="height:100px;position:absolute;top:-30px;left:0;filter:drop-shadow(0 6px 16px rgba(0,0,0,0.6))">
       </div>
       <div style="display:flex;align-items:center;gap:12px">
         <span style="font-size:14px;color:#aaa">Merhaba, <b style="color:#e0e0e0">${session.ad}</b></span>
