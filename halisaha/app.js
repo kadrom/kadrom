@@ -117,7 +117,7 @@ function renderAuth(tab = 'giris') {
     <div class="auth-wrap">
       <div class="card">
         <h2 style="margin-bottom:20px">
-          <img src="logo.png" alt="KADROM" style="height:44px;display:block;margin:0 auto 8px">
+          <img src="logo.png" alt="KADROM" style="height:120px;display:block;margin:0 auto 8px;filter:drop-shadow(0 6px 16px rgba(0,0,0,0.6))">
         </h2>
         <div class="tabs">
           <div class="tab ${tab === 'giris' ? 'active' : ''}" data-tab="giris">Giriş Yap</div>
