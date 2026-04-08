@@ -115,10 +115,10 @@ function renderNav(session) {
 function renderAuth(tab = 'giris') {
   return `
     <div class="auth-wrap">
-      <div class="card">
-        <h2 style="margin-bottom:20px">
-          <img src="logo.png" alt="KADROM" style="height:120px;display:block;margin:0 auto 8px;filter:drop-shadow(0 6px 16px rgba(0,0,0,0.6))">
-        </h2>
+      <div style="display:flex;justify-content:center;margin-bottom:-60px;position:relative;z-index:10">
+        <img src="logo.png" alt="KADROM" style="height:140px;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.7))">
+      </div>
+      <div class="card" style="padding-top:72px">
         <div class="tabs">
           <div class="tab ${tab === 'giris' ? 'active' : ''}" data-tab="giris">Giriş Yap</div>
           <div class="tab ${tab === 'kayit' ? 'active' : ''}" data-tab="kayit">Kayıt Ol</div>
