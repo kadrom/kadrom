@@ -191,7 +191,7 @@ async function maclarYukle(session, sehirFiltre = 'Tümü') {
 
 function renderYeniMacForm() {
   return `
-    <div class="card" style="border:2px solid #16a34a">
+    <div class="card" style="border:2px solid #22c55e33">
       <h2>Yeni Maç Oluştur</h2>
       <div class="form-group">
         <label>Şehir</label>
@@ -202,19 +202,26 @@ function renderYeniMacForm() {
       <div class="form-group" style="position:relative">
         <label>Saha Adı veya Adres Ara</label>
         <input id="macKonum" type="text" placeholder="örn: Atatürk Cad. No:5 Kadıköy veya saha adı" autocomplete="off">
-        <div id="sahaOneri" style="position:absolute;top:100%;left:0;right:0;background:white;border:1px solid #ddd;border-radius:8px;z-index:999;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1)"></div>
+        <div id="sahaOneri" style="position:absolute;top:100%;left:0;right:0;background:#0e0e0e;border:1.5px solid #252525;border-radius:10px;z-index:999;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.4)"></div>
       </div>
       <div class="form-group">
         <label>Konum — listeden seç veya haritaya tıkla</label>
         <div id="secimHaritasi"></div>
-        <p id="koordinatBilgi" style="font-size:13px;color:#888;margin-top:6px">Haritada bir nokta seçin veya yukarıdan arayın</p>
+        <p id="koordinatBilgi" style="font-size:13px;color:#555;margin-top:6px">Haritada bir nokta seçin veya yukarıdan arayın</p>
       </div>
       <div class="form-group"><label>Tarih</label><input id="macTarih" type="date"></div>
       <div class="form-group"><label>Saat</label><input id="macSaat" type="time"></div>
-      <div class="form-group"><label>Eksik Oyuncu Sayısı</label>
-        <select id="macEksik">
-          ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}">${n} kişi</option>`).join('')}
-        </select>
+      <div style="display:flex;gap:12px">
+        <div class="form-group" style="flex:1"><label>Takım 1 Kişi Sayısı</label>
+          <select id="macTakim1">${[3,4,5,6,7,8].map(n=>`<option value="${n}" ${n===5?'selected':''}>${n} kişi</option>`).join('')}</select>
+        </div>
+        <div class="form-group" style="flex:1"><label>Takım 2 Kişi Sayısı</label>
+          <select id="macTakim2">${[3,4,5,6,7,8].map(n=>`<option value="${n}" ${n===5?'selected':''}>${n} kişi</option>`).join('')}</select>
+        </div>
+      </div>
+      <div class="form-group"><label>Kişi Başı Fiyat</label><input id="macFiyat" type="text" placeholder="örn: 100₺ veya Ücretsiz"></div>
+      <div class="form-group"><label>Açıklama (zorunlu)</label>
+        <textarea id="macAciklama" rows="3" style="resize:vertical" placeholder="Maç hakkında bilgi ver, kural, seviye, ekipman vb..."></textarea>
       </div>
       <div style="display:flex;gap:10px">
         <button class="btn btn-green" id="macKaydetBtn" style="flex:1">Oluştur</button>
@@ -263,6 +270,21 @@ async function detayYukle(macId, session) {
     sb.from('istekler').select('*').eq('mac_id', macId).order('created_at', { ascending: true })
   ]);
 
+  // 45 dakika geçmiş bekleyen istekleri iptal et
+  if (istekler) {
+    const simdi = new Date();
+    for (const istek of istekler) {
+      if (istek.durum === 'bekliyor') {
+        const gonderilme = new Date(istek.created_at);
+        const dakika = (simdi - gonderilme) / 60000;
+        if (dakika > 45) {
+          await sb.from('istekler').update({ durum: 'iptal' }).eq('id', istek.id);
+          istek.durum = 'iptal';
+        }
+      }
+    }
+  }
+
   let olusturanTelefon = null;
   if (mac && mac.olusturan !== session.kullanici) {
     const { data: olusturan } = await sb.from('kullanicilar').select('telefon').eq('kullanici', mac.olusturan).single();
@@ -288,6 +310,9 @@ async function detayYukle(macId, session) {
       <h2>${konumHtml}</h2>
       <p style="margin:8px 0">📅 ${mac.tarih} — ⏰ ${mac.saat}</p>
       <p style="margin:8px 0">👤 Oluşturan: <b>${mac.olusturan}</b>${olusturanTelefon ? ` — 📞 <a href="tel:${olusturanTelefon}" style="color:#22c55e">${olusturanTelefon}</a>` : ''}</p>
+      ${mac.fiyat ? `<p style="margin:8px 0">💰 Kişi başı: <b style="color:#22c55e">${mac.fiyat}</b></p>` : ''}
+      ${mac.takim1 && mac.takim2 ? `<p style="margin:8px 0">⚽ Format: <b>${mac.takim1}vs${mac.takim2}</b></p>` : ''}
+      ${mac.aciklama ? `<div style="margin:12px 0;padding:12px;background:#0a0a0a;border-radius:10px;border-left:3px solid #22c55e"><p style="font-size:14px;color:#ccc;line-height:1.6">${mac.aciklama}</p></div>` : ''}
       <p style="margin:8px 0">👥 Katılımcılar (${mac.katilimcilar ? mac.katilimcilar.length : 0}/${mac.eksik}):
         ${mac.katilimcilar && mac.katilimcilar.length > 0
           ? mac.katilimcilar.map(k => `<span style="background:#14532d;color:#22c55e;padding:2px 8px;border-radius:20px;font-size:13px;margin:2px">${k}</span>`).join('')
@@ -305,7 +330,7 @@ async function detayYukle(macId, session) {
               ? `<button class="btn btn-sm" style="background:#333;color:#888;cursor:not-allowed" disabled>⏳ İstek Gönderildi</button>`
               : dolu
                 ? `<button class="btn btn-sm" style="background:#333;color:#666;cursor:not-allowed" disabled>Kadro Dolu</button>`
-                : `<button class="btn btn-green" id="istekGonderBtn">İstek Gönder</button>`
+                : `<button class="btn btn-green" id="istekGonderBtn">📨 Katılma İsteği Gönder</button>`
         }
       </div>
     </div>
@@ -601,14 +626,19 @@ async function handleMacOlustur(session) {
   const sehir = document.getElementById('macSehir').value;
   const tarih = document.getElementById('macTarih').value;
   const saat = document.getElementById('macSaat').value;
-  const eksik = parseInt(document.getElementById('macEksik').value);
-  if (!konum || !tarih || !saat) return showAlert('macAlert', 'Tüm alanları doldurun.', 'red');
+  const takim1 = parseInt(document.getElementById('macTakim1').value);
+  const takim2 = parseInt(document.getElementById('macTakim2').value);
+  const fiyat = document.getElementById('macFiyat').value.trim();
+  const aciklama = document.getElementById('macAciklama').value.trim();
+  const eksik = takim1 + takim2;
+
+  if (!konum || !tarih || !saat) return showAlert('macAlert', 'Konum, tarih ve saat zorunlu.', 'red');
+  if (!aciklama) return showAlert('macAlert', 'Açıklama yazmak zorunlu.', 'red');
   if (!seciliKoord) return showAlert('macAlert', 'Lütfen haritadan veya aramadan konum seçin.', 'red');
 
   const { error } = await sb.from('maclar').insert({
-    konum, sehir, tarih, saat, eksik,
-    lat: seciliKoord.lat,
-    lng: seciliKoord.lng,
+    konum, sehir, tarih, saat, eksik, takim1, takim2, fiyat, aciklama,
+    lat: seciliKoord.lat, lng: seciliKoord.lng,
     olusturan: session.kullanici,
     katilimcilar: []
   });
